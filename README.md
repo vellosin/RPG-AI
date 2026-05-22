@@ -14,6 +14,29 @@ O backend em Fastify orquestra a campanha, a memoria e os turnos. O frontend em 
 - pode gerar retratos e cenas com provider local de imagem;
 - pode narrar falas com Piper TTS em portugues.
 
+## Tecnologias utilizadas
+
+- TypeScript e Node.js.
+- Fastify para a API.
+- Socket.IO para tempo real.
+- React e Vite no frontend.
+- LangChain e LangGraph para orquestracao do mestre e dos fluxos de jogo.
+- SQLite com `better-sqlite3` para persistencia local.
+- Neo4j para memoria em grafo.
+- JanAI como provider principal de LLM via API compativel com OpenAI.
+- Ollama como fallback de texto.
+- ComfyUI como provider principal de imagem.
+- Piper TTS para voz local.
+- PowerShell, scripts Node e Python para automacao e operacao local.
+
+## O diferencial do projeto
+
+- nao e apenas um chat tematico: o mestre e orquestrado como sistema de jogo com regras, memoria, combate e fluxo de sala.
+- combina texto, imagem, voz e memoria persistente em uma unica experiencia de RPG cooperativo.
+- opera em modelo local-first, permitindo usar providers locais em vez de depender de SaaS como centro da aplicacao.
+- integra LangGraph, JanAI, ComfyUI, Piper, SQLite e Neo4j em uma aplicacao unica, em vez de ferramentas soltas.
+- trata observabilidade e validacao de integracoes como parte do produto, via `/api/integrations` e estatisticas de chamadas.
+
 ## Arquitetura
 
 - `apps/server`: API Fastify, Socket.IO, LangGraph, persistencia e integracoes.
