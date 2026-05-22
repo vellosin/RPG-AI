@@ -27,6 +27,15 @@ O servidor pode servir o frontend compilado em `http://127.0.0.1:8787/app/` quan
 
 O repositorio nao inclui pesos de modelos, checkpoints, chaves ou tokens. Tudo deve ser configurado localmente via `apps/server/.env`.
 
+Para a experiencia principal deste projeto, considere este conjunto como o caminho suportado:
+
+- texto do mestre: JanAI com `JAN_MODEL=Qwen3_5-9B-IQ4_XS` ou outro modelo compativel exposto via API OpenAI-like;
+- imagem: ComfyUI em `IMAGE_COMFY_URL`, com `IMAGE_PROVIDER=comfy`;
+- voz: Piper local com as vozes `pt_BR-faber-medium` e `pt_BR-edresson-low`;
+- memoria: SQLite local + Neo4j habilitado com `NEO4J_ENABLED=true`.
+
+O servidor tem modos de fallback para degradar com seguranca, mas o README abaixo prioriza a stack principal completa.
+
 | Area | Provider local principal | Modelo/configuracao padrao no repo |
 | --- | --- | --- |
 | LLM do mestre | JanAI em API OpenAI-compativel | `JAN_MODEL=Qwen3_5-9B-IQ4_XS` |
@@ -43,13 +52,135 @@ Ordem de providers no servidor:
 - imagem: ComfyUI / runtime local / API compativel -> fallback interno;
 - voz: Piper local via processo filho, desabilitado por padrao.
 
+No fluxo principal de imagem com ComfyUI, o backend monta o workflow via API e envia para `/prompt`. Nao e necessario importar workflow JSON manualmente no ComfyUI nem instalar custom nodes do projeto. O fluxo usa apenas os nodes padrao `CheckpointLoaderSimple`, `CLIPTextEncode`, `EmptyLatentImage`, `KSampler`, `VAEDecode` e `SaveImage`.
+
 ## Requisitos
 
+- Windows 10/11.
 - Node.js 20+ e npm 10+.
-- JanAI ou outro endpoint OpenAI-compativel local para a experiencia completa de texto.
-- ComfyUI se voce quiser retratos e imagens locais.
-- Piper se voce quiser narracao em voz.
-- Neo4j apenas se quiser memoria em grafo.
+- Git.
+- JanAI para o fluxo principal de texto.
+- ComfyUI para o fluxo principal de retratos e imagens.
+- Piper para a narracao em voz.
+- Neo4j para a memoria em grafo.
+
+## Instalacao do zero
+
+Esta secao assume que a pessoa vai montar a stack principal completa a partir do repositorio publico.
+
+### 1. Baixe e instale o que e externo ao repositorio
+
+Voce precisa ter estes componentes instalados fora do repo:
+
+1. Node.js 20+.
+2. Git.
+3. JanAI Desktop, ou outro servidor local compativel com API OpenAI-like.
+4. ComfyUI.
+5. Neo4j Desktop, Neo4j Server local ou uma instancia remota acessivel.
+6. Piper TTS.
+7. As duas vozes Piper usadas pelo projeto:
+	- `pt_BR-faber-medium.onnx`
+	- `pt_BR-edresson-low.onnx`
+8. Um checkpoint SDXL disponivel no ComfyUI. O padrao documentado no projeto e `RealVisXL_V5.0_fp16.safetensors`.
+
+O repositorio nao traz nenhum desses pesos, binarios ou bancos prontos. Ele traz apenas o codigo que conversa com eles.
+
+### 2. Clone o repositorio e instale dependencias Node
+
+```bash
+git clone https://github.com/vellosin/RPG-AI.git
+cd RPG-AI
+npm install
+copy apps/server/.env.example apps/server/.env
+```
+
+### 3. Configure o JanAI
+
+Fluxo esperado pelo projeto:
+
+1. Instale e abra o JanAI.
+2. Baixe dentro do JanAI um modelo compativel com o nome que voce pretende usar no `.env`.
+3. O padrao documentado no repo e `Qwen3_5-9B-IQ4_XS`.
+4. Ligue o servidor local OpenAI-compatible do JanAI.
+5. Confirme que este endpoint responde:
+
+```powershell
+Invoke-WebRequest -UseBasicParsing http://127.0.0.1:1337/v1/models | Select-Object -ExpandProperty Content
+```
+
+Se voce usar outro modelo ou outra porta, ajuste `JAN_MODEL` e `JAN_BASE_URL` no `.env`.
+
+### 4. Configure o ComfyUI para o fluxo principal de imagem
+
+O projeto usa ComfyUI como provider principal de imagem. O backend monta e envia o workflow por API. Voce nao precisa importar workflow manual deste projeto.
+
+Passos:
+
+1. Instale o ComfyUI.
+2. Coloque pelo menos um checkpoint SDXL na pasta de checkpoints do ComfyUI.
+3. Se quiser seguir exatamente o padrao documentado, use `RealVisXL_V5.0_fp16.safetensors`.
+4. Inicie o ComfyUI.
+5. Confirme que ele responde:
+
+```powershell
+Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8188/system_stats | Select-Object -ExpandProperty StatusCode
+```
+
+6. Confirme que o node de checkpoint esta exposto:
+
+```powershell
+Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8188/object_info/CheckpointLoaderSimple | Select-Object -ExpandProperty StatusCode
+```
+
+Para este repositorio, o ComfyUI precisa responder corretamente a:
+
+- `GET /system_stats`
+- `GET /object_info/CheckpointLoaderSimple`
+- `POST /prompt`
+- `GET /history/:promptId`
+- `GET /view`
+
+O fluxo principal documentado aqui considera apenas ComfyUI. O fallback antigo de imagem nao precisa ser configurado.
+
+### 5. Configure o Piper
+
+Instale o Piper em um ambiente acessivel pelo terminal. Exemplo no Windows:
+
+```bash
+py -m pip install --user piper-tts
+```
+
+Baixe as vozes usadas pelo projeto:
+
+```bash
+py -m piper.download_voices pt_BR-faber-medium
+py -m piper.download_voices pt_BR-edresson-low
+```
+
+Depois descubra onde os arquivos `.onnx` ficaram e aponte esses caminhos no `.env`.
+
+Se o comando `piper` nao estiver no `PATH`, use caminho absoluto em `TTS_PIPER_BINARY`.
+
+### 6. Configure o Neo4j
+
+Fluxo esperado:
+
+1. Suba uma instancia Neo4j local ou remota.
+2. Tenha em maos URI, usuario, senha e database.
+3. Preencha esses valores no `.env`.
+
+O backend cria automaticamente constraints, indice por tipo e tenta criar o indice vetorial quando a versao do Neo4j suporta isso.
+
+## Checklist da stack principal
+
+Antes de tentar jogar com a experiencia completa, confirme estes quatro blocos:
+
+1. JanAI online em `http://127.0.0.1:1337/v1` com um modelo carregado.
+2. ComfyUI online em `http://127.0.0.1:8188` com um checkpoint SDXL disponivel. O padrao documentado no repo e `RealVisXL_V5.0_fp16.safetensors`.
+3. Piper instalado e acessivel por `piper` ou por caminho absoluto, com as vozes `.onnx` configuradas no `.env`.
+4. Neo4j acessivel com usuario, senha e database validos.
+
+Se qualquer um desses blocos faltar, o servidor ainda pode iniciar, mas voce nao estara validando a stack principal do projeto.
 
 ## Configuracao segura para um repositorio publico
 
@@ -69,17 +200,59 @@ copy apps/server/.env.example apps/server/.env
 
 Edite `apps/server/.env` e ajuste o que voce realmente for usar.
 
-Configuracao minima sugerida:
+Configuracao recomendada para a stack principal:
 
 ```dotenv
 PORT=8787
 HOST=127.0.0.1
 JAN_BASE_URL=http://127.0.0.1:1337/v1
 JAN_MODEL=Qwen3_5-9B-IQ4_XS
-TEXT_ONLY=true
+IMAGE_PROVIDER=comfy
+IMAGE_COMFY_URL=http://127.0.0.1:8188
+IMAGE_COMFY_CHECKPOINT=RealVisXL_V5.0_fp16.safetensors
+NEO4J_ENABLED=true
+NEO4J_URI=bolt://127.0.0.1:7687
+NEO4J_USERNAME=neo4j
+NEO4J_PASSWORD=your_password
+NEO4J_DATABASE=neo4j
+TTS_ENABLED=true
+TTS_PIPER_BINARY=piper
+TTS_VOICE_GM=./pt_BR-faber-medium.onnx
+TTS_VOICE_NPC_GRUFF=./pt_BR-edresson-low.onnx
 ```
 
-Com `TEXT_ONLY=true`, o servidor pula jobs de imagem. Isso facilita a primeira subida do projeto antes de configurar ComfyUI e Piper.
+Exemplo mais realista com caminhos absolutos no Windows:
+
+```dotenv
+PORT=8787
+HOST=127.0.0.1
+JAN_BASE_URL=http://127.0.0.1:1337/v1
+JAN_MODEL=Qwen3_5-9B-IQ4_XS
+IMAGE_PROVIDER=comfy
+IMAGE_COMFY_URL=http://127.0.0.1:8188
+IMAGE_COMFY_CHECKPOINT=RealVisXL_V5.0_fp16.safetensors
+NEO4J_ENABLED=true
+NEO4J_URI=bolt://127.0.0.1:7687
+NEO4J_USERNAME=neo4j
+NEO4J_PASSWORD=sua_senha
+NEO4J_DATABASE=neo4j
+TTS_ENABLED=true
+TTS_PIPER_BINARY=piper
+TTS_VOICE_GM=C:/caminho/para/pt_BR-faber-medium.onnx
+TTS_VOICE_NPC_GRUFF=C:/caminho/para/pt_BR-edresson-low.onnx
+```
+
+Se voce quiser apenas testar a subida basica do servidor antes da stack completa, pode habilitar um modo reduzido com `TEXT_ONLY=true` e deixar Neo4j/TTS desativados. Isso e util para desenvolvimento, mas nao representa o fluxo principal documentado aqui.
+
+## Ordem recomendada de inicializacao
+
+Para evitar erro de integracao na primeira execucao, suba nesta ordem:
+
+1. JanAI.
+2. ComfyUI.
+3. Neo4j.
+4. Backend do RPG com `npm run dev:server`.
+5. Frontend com `npm run dev:web`, ou use `/app/` depois de `npm run build`.
 
 ## Como rodar
 
@@ -135,10 +308,22 @@ npm run smoke:server
 - carregue o modelo configurado em `JAN_MODEL`;
 - confirme que `http://127.0.0.1:1337/v1/models` responde.
 
+Se `/v1/models` responder, mas o nome do modelo nao bater com `JAN_MODEL`, ajuste o `.env`.
+
 ### 2. Imagem local via ComfyUI
 
 - suba o ComfyUI e confirme `http://127.0.0.1:8188/system_stats`;
-- se quiser usar checkpoint especifico, configure `IMAGE_COMFY_CHECKPOINT` no `.env`.
+- configure `IMAGE_PROVIDER=comfy` no `.env` para forcar o fluxo principal;
+- configure `IMAGE_COMFY_CHECKPOINT` no `.env` se quiser prender o projeto a um checkpoint especifico;
+- se `IMAGE_COMFY_CHECKPOINT` ficar vazio, o backend tenta usar o primeiro checkpoint retornado por `CheckpointLoaderSimple`.
+
+Para este projeto, o backend envia workflows txt2img gerados em codigo para perfis de `portrait`, `scene`, `npc`, `creature` e `item`. O ComfyUI precisa responder a:
+
+- `GET /system_stats`
+- `GET /object_info/CheckpointLoaderSimple`
+- `POST /prompt`
+- `GET /history/:promptId`
+- `GET /view`
 
 ### 3. Voz local via Piper
 
@@ -159,9 +344,16 @@ TTS_VOICE_GM=./pt_BR-faber-medium.onnx
 TTS_VOICE_NPC_GRUFF=./pt_BR-edresson-low.onnx
 ```
 
+Observacoes importantes sobre Piper:
+
+- o projeto nao sobe um servidor HTTP do Piper; ele executa `piper` como processo one-shot por frase;
+- `TTS_VOICE_GM` e obrigatorio para o TTS ficar verde em `/api/integrations`;
+- as vozes extras de NPC sao opcionais, mas a voz do GM precisa existir no disco.
+- se `TTS_ENABLED=true` e `TTS_VOICE_GM` apontar para um arquivo inexistente, o backend sobe, mas o TTS fica em falha.
+
 ### 4. Memoria em grafo com Neo4j
 
-Opcional. Ative apenas se realmente quiser o provider em grafo:
+No fluxo principal desta stack, Neo4j deve estar habilitado:
 
 ```dotenv
 NEO4J_ENABLED=true
@@ -170,6 +362,14 @@ NEO4J_USERNAME=neo4j
 NEO4J_PASSWORD=your_password
 NEO4J_DATABASE=neo4j
 ```
+
+O backend cria automaticamente:
+
+- constraints para `RpgRoom`, `CampaignMemory` e `MemoryTag`;
+- indice por `kind`;
+- indice vetorial em `CampaignMemory.embedding` quando a versao do Neo4j suportar isso.
+
+Mesmo com Neo4j ativo, o projeto continua usando SQLite local para persistencia de campanha.
 
 ### 5. Verifique integracoes
 
@@ -184,6 +384,37 @@ Ou, no PowerShell:
 ```powershell
 Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8787/api/integrations | Select-Object -ExpandProperty Content
 ```
+
+Para considerar a stack principal pronta, o esperado e:
+
+- `jan.ok = true`
+- `image.provider = comfyui` e `image.ok = true`
+- `memory.provider` apontando para o provider com Neo4j habilitado e `memory.ok = true`
+- `tts.provider = piper-tts` e `tts.ok = true`
+
+## Diagnostico rapido
+
+Se a aplicacao iniciar, mas a stack principal nao estiver completa, consulte `/api/integrations` e compare com esta tabela:
+
+- `jan.ok = false`: JanAI nao esta no ar, a porta esta errada, ou `JAN_MODEL` nao corresponde ao modelo carregado.
+- `image.ok = false` com provider `comfyui` ou `local-image-server`: ComfyUI nao esta no ar, o checkpoint configurado nao existe, ou a API nao esta respondendo aos endpoints esperados.
+- `memory.ok = false`: URI, usuario, senha ou database do Neo4j estao errados; em algumas versoes antigas o indice vetorial pode nao ser criado, mas o provider ainda deve funcionar.
+- `tts.ok = false`: `TTS_ENABLED` esta desligado, `TTS_PIPER_BINARY` nao foi encontrado, ou `TTS_VOICE_GM` aponta para um arquivo ausente.
+
+## Resumo do que precisa ser baixado
+
+Para uma pessoa conseguir executar a aplicacao corretamente com o fluxo principal, ela precisa baixar e configurar:
+
+1. O proprio repositorio.
+2. Node.js.
+3. JanAI e um modelo local compativel com `JAN_MODEL`.
+4. ComfyUI.
+5. Um checkpoint SDXL para o ComfyUI, de preferencia `RealVisXL_V5.0_fp16.safetensors`.
+6. Piper TTS.
+7. As vozes `pt_BR-faber-medium.onnx` e `pt_BR-edresson-low.onnx`.
+8. Neo4j.
+
+Sem esses itens, o repositorio compila e o servidor pode ate iniciar, mas a experiencia principal do projeto nao fica reproduzivel.
 
 ## Scripts utilitarios
 
@@ -206,3 +437,4 @@ Os scripts PowerShell foram ajustados para usar caminhos relativos do repositori
 
 - `OPERACAO_RPG.md` e um documento local da maquina de desenvolvimento e nao deve ser publicado no repositório publico.
 - O projeto foi pensado para operacao local-first. Em ambiente publico, priorize `.env` local e providers locais, nao chaves embutidas no codigo.
+- O repositório atual permite subir o servidor apenas com `npm install` e `.env.example`, mas isso resulta em modo degradado. Para um terceiro reproduzir a experiencia principal, ele ainda precisa providenciar JanAI, ComfyUI, Piper, vozes `.onnx`, checkpoint e Neo4j funcionando localmente ou em endpoints acessiveis.
