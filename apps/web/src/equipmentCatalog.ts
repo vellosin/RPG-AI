@@ -1,0 +1,72 @@
+export type EquipmentInfo = {
+  category: "weapon" | "armor" | "shield" | "tool" | "gear" | "consumable" | "focus" | "instrument" | "document";
+  summary: string;
+  details: string;
+};
+
+const item = (category: EquipmentInfo["category"], summary: string, details: string): EquipmentInfo => ({ category, summary, details });
+
+export const EQUIPMENT_CATALOG: Record<string, EquipmentInfo> = {
+  Longsword: item("weapon", "1d8 cortante, versatil 1d10.", "Espada longa marcial. Usa uma mao com 1d8 de dano cortante, ou duas maos com 1d10. Boa para duelos, aparar golpes e combate disciplinado."),
+  Greataxe: item("weapon", "1d12 cortante, pesada, duas maos.", "Machadao marcial. Exige duas maos, causa dano alto e serve para golpes brutais ou quebrar madeira, mas e ruim em espacos apertados."),
+  "Two Handaxes": item("weapon", "Duas machadinhas, 1d6 cortante cada.", "Armas leves que podem ser usadas em combate com duas armas ou arremessadas a curta distancia. Tambem cortam cordas, galhos e estacas."),
+  Handaxe: item("weapon", "1d6 cortante, leve, arremesso.", "Machadinha simples. Pode ser usada corpo a corpo, arremessada ou usada como ferramenta bruta para cortar madeira e cordas."),
+  Rapier: item("weapon", "1d8 perfurante, finesse.", "Rapieira marcial de uma mao. Pode usar Forca ou Agilidade/Destreza. Excelente para golpes precisos, duelos e ataque furtivo."),
+  Shortbow: item("weapon", "1d6 perfurante, distancia, duas maos.", "Arco curto. Usa Agilidade/Destreza e consome flechas. Bom para emboscadas, cobertura e ataques seguros a distancia."),
+  Longbow: item("weapon", "1d8 perfurante, distancia, duas maos.", "Arco longo marcial. Tem alcance maior que o arco curto, mas exige espaco para puxar e municao disponivel."),
+  Shortsword: item("weapon", "1d6 perfurante, leve/finesse.", "Espada curta marcial. Boa para personagens ageis, duas armas, corredores estreitos e ataques furtivos."),
+  Dagger: item("weapon", "1d4 perfurante, leve/finesse, arremesso.", "Adaga simples. Facil de esconder, pode ser arremessada e tambem corta tecido, cordas, selos e amarras."),
+  Quarterstaff: item("weapon", "1d6 contundente, versatil 1d8.", "Bordao/cajado simples. Serve como arma, apoio de caminhada, alavanca leve, sonda de piso ou foco narrativo."),
+  Mace: item("weapon", "1d6 contundente.", "Maca simples de uma mao. Boa contra ossos, armaduras leves, objetos frageis e criaturas vulneraveis a impacto."),
+  Warhammer: item("weapon", "1d8 contundente, versatil 1d10.", "Martelo de guerra marcial. Forte contra armaduras, esqueletos, dobradicas e objetos resistentes."),
+  Shield: item("shield", "+2 AC enquanto empunhado.", "Escudo ocupa uma mao. Protege contra ataques, pode cobrir aliados adjacentes, bloquear flechas e empurrar em manobras simples."),
+  "Chain Mail": item("armor", "Armadura pesada, AC 16.", "Cota de malha. Defesa alta, pesada e barulhenta. Pode atrapalhar furtividade, nado e escaladas sem preparo."),
+  "Chain Shirt": item("armor", "Armadura media, AC 13 + Agilidade max +2.", "Camisola de cota. Protecao moderada com mobilidade melhor que armadura pesada."),
+  "Leather Armor": item("armor", "Armadura leve, AC 11 + Agilidade.", "Armadura de couro. Boa para furtividade e movimento, mas oferece pouca protecao."),
+  "Studded Leather": item("armor", "Armadura leve, AC 12 + Agilidade.", "Couro cravejado. Excelente para personagens ageis que querem defesa sem perder mobilidade."),
+  "Scale Mail": item("armor", "Armadura media, AC 14 + Agilidade max +2.", "Cota de escamas. Boa defesa, mas costuma prejudicar furtividade e faz barulho."),
+  "Plate Mail": item("armor", "Armadura pesada, AC 18.", "Armadura de placas. Defesa excelente, muito pesada, barulhenta e ruim para agua profunda ou passagens estreitas."),
+  Torch: item("consumable", "Luz por cerca de 1 hora.", "Tocha ilumina area proxima, acende materiais inflamaveis, sinaliza aliados, aquece e pode virar arma improvisada de fogo."),
+  Torches: item("consumable", "Conjunto de tochas; cada uma dura cerca de 1 hora.", "Use para marcar caminho, iluminar salas, afastar criaturas sensiveis a fogo ou iniciar fogueiras."),
+  Rations: item("consumable", "Comida de viagem.", "Racoes sustentam uma pessoa por cerca de um dia por porcao. Tambem podem servir para barganha simples ou distrair animais famintos."),
+  Rope: item("gear", "Corda de 15 m; suporta cerca de 120 kg com seguranca.", "Corda trancada para escalar, amarrar, descer pocos, atravessar fendas, prender cargas ou criar armadilhas simples."),
+  Lockpicks: item("tool", "Ferramentas para fechaduras e armadilhas.", "Gazuas/ferramentas de ladrao. Usadas para abrir fechaduras, desarmar mecanismos e manipular travas pequenas."),
+  Caltrops: item("consumable", "Espinhos para atrasar perseguidores.", "Estrepes espalhados no chao. Ferem ou reduzem movimento de quem passar sem cuidado. Recuperacao parcial apos a cena."),
+  "Hunting Trap": item("tool", "Armadilha mecanica para prender criatura.", "Precisa de tempo para armar. Prende quem pisa nela, causa ferimento e limita movimento ate escapar."),
+  Waterskin: item("gear", "Recipiente portatil de agua.", "Cantil/odre para viagem, descanso, sobrevivencia, apagar pequenos focos de fogo ou transportar liquidos simples."),
+  "Healer's Kit": item("consumable", "10 usos para estabilizar feridos.", "Kit com bandagens e talas. Em D&D, estabiliza criatura com 0 HP sem teste. Tambem ajuda em primeiros socorros."),
+  "Holy Water": item("consumable", "Frasco sagrado contra mortos-vivos/infernais.", "Agua benta pode ser arremessada, aplicada em objetos ou usada em pequenos ritos de purificacao. Normalmente consumivel."),
+  "Holy Symbol": item("focus", "Foco divino.", "Usado por Clerigos e Paladinos para conjurar e canalizar poder divino. Tambem funciona como simbolo de fe e autoridade religiosa."),
+  "Arcane Focus": item("focus", "Foco arcano.", "Substitui componentes materiais comuns de magias para quem ja sabe conjurar. Nao concede magias sozinho."),
+  "Focus Wand": item("focus", "Varinha de foco arcano.", "Canaliza magias conhecidas do personagem. Nao permite conjurar magia ausente da ficha."),
+  "Druidic Focus": item("focus", "Foco de magia druidica.", "Ramo, totem ou simbolo natural usado para magias druidicas e ritos ligados a natureza."),
+  "Component Pouch": item("focus", "Bolsa de componentes comuns.", "Contem materiais simples para conjuracao. Nao substitui componentes caros nem magias nao conhecidas."),
+  Spellbook: item("document", "Livro de magias do Mago.", "Registra magias aprendidas e permite prepara-las. Perder o grimorio limita muito a flexibilidade do Mago."),
+  Ink: item("gear", "Tinta para escrita e marcas.", "Serve para copiar runas, anotar pistas, marcar mapas, falsificar documentos ou registrar descobertas."),
+  "Prayer Book": item("document", "Livro devocional.", "Contem preces, ritos e referencias religiosas. Ajuda com simbolos sagrados, liturgia e interacoes com fieis."),
+  "Herbalism Kit": item("tool", "Ferramentas para ervas e remedios.", "Usado para identificar plantas, preparar remedios simples, antitoxinas ou pomadas com tempo e ingredientes."),
+  "Disguise Kit": item("tool", "Maquiagem e acessorios de disfarce.", "Permite alterar aparencia para infiltracao, esconder identidade ou criar personagem falso."),
+  Lute: item("instrument", "Instrumento musical.", "Alaude para performance, distracao, sinalizacao e cenas sociais. Pode apoiar habilidades de Bardo quando aplicavel."),
+  Lyre: item("instrument", "Instrumento musical portatil.", "Lira para performance, rituais, diplomacia, distracao ou expressao artistica."),
+  "Book of Songs": item("document", "Cancioneiro.", "Letras, cifras e historias que ajudam em performances, pesquisa cultural e improvisacao social."),
+  "Quiver (20 arrows)": item("consumable", "Aljava com 20 flechas.", "Municao para arcos. Cada disparo normalmente consome uma flecha, algumas podem ser recuperadas apos a cena."),
+  Insignia: item("gear", "Sinal de patente ou faccao.", "Pode provar afiliacao, abrir portas sociais, intimidar subordinados ou causar problemas com inimigos da organizacao."),
+  "Dice Set": item("tool", "Conjunto de dados.", "Usado para jogos, apostas, distrair NPCs, blefar ou criar pequenos sinais combinados."),
+  Notebook: item("document", "Caderno de anotacoes.", "Serve para pistas, mapas, nomes, runas e provas escritas."),
+  "Reference Scroll": item("document", "Pergaminho academico ou tecnico.", "Ajuda em testes de conhecimento quando o conteudo for relevante."),
+  "Prayer Beads": item("focus", "Contas devocionais.", "Auxiliam meditacao, ritos, juramentos e interacoes religiosas."),
+  Incense: item("consumable", "Incenso ritual.", "Usado para purificacao, funerais, mascarar odores ou criar ambiente cerimonial. Consumido ao queimar."),
+  Costume: item("gear", "Roupa de atuacao ou disfarce simples.", "Ajuda em performance ou infiltracao social. Nao substitui armadura."),
+  "Musical Instrument": item("instrument", "Instrumento para performance.", "Tocar, distrair, ganhar moedas, entreter NPCs, transmitir sinais ou sustentar cenas sociais."),
+  "Wooden Carving": item("gear", "Objeto pessoal ou devocional pequeno.", "Pode ter valor emocional, ritual ou social conforme a historia."),
+};
+
+export const getEquipmentInfo = (itemName: string): EquipmentInfo => {
+  const direct = EQUIPMENT_CATALOG[itemName];
+  if (direct) return direct;
+  const normalized = itemName.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+  const match = Object.entries(EQUIPMENT_CATALOG).find(([name]) =>
+    name.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase() === normalized
+  );
+  return match?.[1] ?? item("gear", "Item registrado na ficha.", "Este item existe no inventario do personagem, mas ainda nao tem uma regra detalhada no catalogo.");
+};

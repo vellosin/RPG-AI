@@ -1,0 +1,25 @@
+{
+  "name": "local-rpg-ai",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/server",
+    "apps/web"
+  ],
+  "scripts": {
+    "dev:server": "npm --workspace apps/server run dev",
+    "dev:web": "npm --workspace apps/web run dev",
+    "build": "npm run build --workspaces",
+    "smoke:server": "node scripts/smoke-server.mjs",
+    "portraits:grid": "tsx scripts/generate-portrait-grid.ts",
+    "stack:check": "powershell -ExecutionPolicy Bypass -File scripts/check-rpg-stack.ps1",
+    "stack:start": "powershell -ExecutionPolicy Bypass -File scripts/start-rpg-stack.ps1",
+    "sessions:list": "node scripts/list-sessions.mjs",
+    "sessions:cleanup": "node scripts/cleanup-old-sessions.mjs",
+    "tts:pronunciation": "node scripts/tts-pronunciation-lab.mjs",
+    "playtest:rpg": "node scripts/playtest-level1-to3.mjs",
+    "playtest:combat-levels": "node scripts/playtest-combat-level1-to3.mjs",
+    "playtest:story-combat": "node scripts/playtest-story-combat-level1-to3.mjs",
+    "audit:monsters": "tsx scripts/audit-monster-catalog.ts"
+  }
+}
